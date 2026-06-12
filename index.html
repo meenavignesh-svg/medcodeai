@@ -1,0 +1,734 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI CPC Medical Coder</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17212b;
+      --muted: #617080;
+      --line: #d9e1e8;
+      --panel: #ffffff;
+      --page: #f4f7f9;
+      --blue: #1f6feb;
+      --teal: #067a75;
+      --amber: #9a6400;
+      --rose: #b42342;
+      --green: #227a42;
+      --shadow: 0 12px 30px rgba(23, 33, 43, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--page);
+    }
+
+    button, textarea, input, select { font: inherit; }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 22px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: #eaf2ff;
+      color: var(--blue);
+      font-weight: 800;
+      flex: 0 0 auto;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 2px;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      min-height: 38px;
+      border-radius: 8px;
+      padding: 0 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .btn.primary {
+      background: var(--blue);
+      color: white;
+      border-color: var(--blue);
+      font-weight: 700;
+    }
+
+    .btn:focus-visible, textarea:focus-visible, select:focus-visible {
+      outline: 3px solid rgba(31, 111, 235, 0.25);
+      outline-offset: 2px;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(320px, 0.92fr) minmax(420px, 1.25fr);
+      gap: 18px;
+      padding: 18px;
+      max-width: 1480px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+
+    .left {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: calc(100vh - 100px);
+    }
+
+    .panel-head {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 15px;
+      letter-spacing: 0;
+    }
+
+    .case-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 14px 16px 0;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    select, input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      min-height: 38px;
+      padding: 7px 10px;
+      color: var(--ink);
+      background: white;
+      text-transform: none;
+      font-weight: 500;
+    }
+
+    textarea {
+      width: calc(100% - 32px);
+      margin: 14px 16px;
+      min-height: 420px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      line-height: 1.5;
+      color: var(--ink);
+      background: #fbfdff;
+    }
+
+    .note-actions {
+      padding: 0 16px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .metric-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfdff;
+      min-width: 0;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 22px;
+      line-height: 1;
+      margin-bottom: 5px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--line);
+      overflow-x: auto;
+      background: #fbfdff;
+    }
+
+    .tab {
+      border: 0;
+      background: transparent;
+      padding: 13px 16px;
+      color: var(--muted);
+      font-weight: 700;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+    }
+
+    .tab.active {
+      color: var(--blue);
+      border-bottom-color: var(--blue);
+      background: white;
+    }
+
+    .view {
+      display: none;
+      padding: 16px;
+    }
+
+    .view.active { display: block; }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+      background: white;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      font-size: 13px;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      background: #f7fafc;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    .code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 24px;
+      border-radius: 999px;
+      padding: 2px 9px;
+      font-size: 12px;
+      font-weight: 800;
+      background: #eef3f7;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .pill.high { background: #e7f7ef; color: var(--green); }
+    .pill.medium { background: #fff4d8; color: var(--amber); }
+    .pill.low { background: #f8e7ec; color: var(--rose); }
+    .pill.info { background: #eaf2ff; color: var(--blue); }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 13px;
+      background: white;
+    }
+
+    .card h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      letter-spacing: 0;
+    }
+
+    .card p, .empty, .small {
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 13px;
+      margin: 0;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .finding {
+      border-left: 4px solid var(--blue);
+      background: #fbfdff;
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .finding.warning { border-left-color: var(--amber); }
+    .finding.risk { border-left-color: var(--rose); }
+    .finding.good { border-left-color: var(--green); }
+
+    .finding strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 14px;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .ghost {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    @media (max-width: 980px) {
+      header { align-items: flex-start; }
+      main { grid-template-columns: 1fr; }
+      .left { min-height: auto; }
+      .metric-strip { grid-template-columns: repeat(2, 1fr); }
+      .cards { grid-template-columns: 1fr; }
+      textarea { min-height: 300px; }
+    }
+
+    @media (max-width: 640px) {
+      header { padding: 14px; flex-direction: column; }
+      .toolbar, .btn { width: 100%; }
+      .btn { justify-content: center; }
+      main { padding: 12px; }
+      .case-fields { grid-template-columns: 1fr; }
+      .metric-strip { grid-template-columns: 1fr 1fr; padding: 12px; }
+      .metric strong { font-size: 19px; }
+      .view { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="mark" aria-hidden="true">CPC</div>
+        <div>
+          <h1>AI CPC Medical Coder</h1>
+          <div class="subtitle">Coder-assist workbench for draft CPT, ICD-10-CM, HCPCS, and audit signals</div>
+        </div>
+      </div>
+      <div class="toolbar">
+        <button class="btn" id="sampleBtn" type="button">Load Sample</button>
+        <button class="btn" id="clearBtn" type="button">Clear</button>
+        <button class="btn primary" id="analyzeBtn" type="button">Analyze Note</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel left" aria-label="Clinical note input">
+        <div>
+          <div class="panel-head">
+            <h2>Case Intake</h2>
+            <span class="pill info" id="wordCount">0 words</span>
+          </div>
+          <div class="case-fields">
+            <label>Setting
+              <select id="setting">
+                <option>Office / Outpatient</option>
+                <option>Emergency Department</option>
+                <option>Hospital Inpatient</option>
+                <option>Ambulatory Surgery</option>
+              </select>
+            </label>
+            <label>Payer Context
+              <select id="payer">
+                <option>Commercial</option>
+                <option>Medicare</option>
+                <option>Medicaid</option>
+                <option>Self Pay</option>
+              </select>
+            </label>
+            <label>Patient Age
+              <input id="age" inputmode="numeric" placeholder="Optional">
+            </label>
+            <label>Specialty
+              <select id="specialty">
+                <option>Primary Care</option>
+                <option>Cardiology</option>
+                <option>Orthopedics</option>
+                <option>Dermatology</option>
+                <option>General Surgery</option>
+              </select>
+            </label>
+          </div>
+          <textarea id="note" spellcheck="true" placeholder="Paste provider documentation, operative note, or encounter summary here."></textarea>
+        </div>
+        <div class="note-actions">
+          <p class="footer-note">Draft coding support only. Validate every code against current CPT, ICD-10-CM, HCPCS, NCCI, payer policy, and the source documentation.</p>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Coding output">
+        <div class="metric-strip">
+          <div class="metric"><strong id="codeTotal">0</strong><span>Draft codes</span></div>
+          <div class="metric"><strong id="riskTotal">0</strong><span>Warnings</span></div>
+          <div class="metric"><strong id="docScore">0%</strong><span>Documentation score</span></div>
+          <div class="metric"><strong id="confidence">--</strong><span>Review confidence</span></div>
+        </div>
+
+        <nav class="tabs" aria-label="Output views">
+          <button class="tab active" data-tab="codes" type="button">Code Suggestions</button>
+          <button class="tab" data-tab="evidence" type="button">Evidence</button>
+          <button class="tab" data-tab="audit" type="button">Audit Checks</button>
+          <button class="tab" data-tab="workflow" type="button">Workflow</button>
+        </nav>
+
+        <div class="view active" id="codes">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>System</th>
+                  <th>Draft Code</th>
+                  <th>Description</th>
+                  <th>Evidence</th>
+                  <th>Confidence</th>
+                </tr>
+              </thead>
+              <tbody id="codeRows">
+                <tr><td colspan="5" class="ghost">Analyze a note to generate draft coding suggestions.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="view" id="evidence">
+          <div class="cards" id="evidenceCards">
+            <div class="card"><h3>Documentation Signals</h3><p>Signals will appear after analysis.</p></div>
+          </div>
+        </div>
+
+        <div class="view" id="audit">
+          <div class="list" id="auditList">
+            <div class="finding"><strong>Ready for review</strong><p class="small">Run analysis to see missing-documentation, medical-necessity, modifier, and payer checks.</p></div>
+          </div>
+        </div>
+
+        <div class="view" id="workflow">
+          <div class="cards">
+            <div class="card">
+              <h3>Coder Review Queue</h3>
+              <p id="queueText">No active case yet.</p>
+            </div>
+            <div class="card">
+              <h3>Next AI Integration</h3>
+              <p>Connect this interface to a protected backend that sends de-identified notes to a model, retrieves structured JSON, and logs coder acceptance decisions.</p>
+            </div>
+            <div class="card">
+              <h3>Compliance Controls</h3>
+              <p>Require human approval, keep source evidence with each code, and separate guideline references from generated reasoning.</p>
+            </div>
+            <div class="card">
+              <h3>Data Boundary</h3>
+              <p>Use HIPAA-ready storage, access controls, audit logs, retention policies, and signed business agreements before handling PHI.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const note = document.querySelector("#note");
+    const sampleBtn = document.querySelector("#sampleBtn");
+    const clearBtn = document.querySelector("#clearBtn");
+    const analyzeBtn = document.querySelector("#analyzeBtn");
+    const wordCount = document.querySelector("#wordCount");
+    const codeRows = document.querySelector("#codeRows");
+    const evidenceCards = document.querySelector("#evidenceCards");
+    const auditList = document.querySelector("#auditList");
+    const queueText = document.querySelector("#queueText");
+    const codeTotal = document.querySelector("#codeTotal");
+    const riskTotal = document.querySelector("#riskTotal");
+    const docScore = document.querySelector("#docScore");
+    const confidence = document.querySelector("#confidence");
+
+    const sample = `Established patient seen for 25 minutes for worsening type 2 diabetes and hypertension. A1c reviewed at 8.4. Patient reports fatigue and home glucose readings above goal. Provider adjusted metformin dose, added lisinopril refill, ordered CMP and A1c, and counseled on diet and medication adherence. Assessment includes type 2 diabetes mellitus without complications and essential hypertension. No chest pain, shortness of breath, or hypoglycemia. Follow up in 3 months.`;
+
+    const rules = [
+      {
+        system: "ICD-10-CM",
+        code: "E11.9",
+        description: "Type 2 diabetes mellitus without complications",
+        terms: ["type 2 diabetes", "diabetes mellitus", "a1c", "metformin"],
+        confidence: 88
+      },
+      {
+        system: "ICD-10-CM",
+        code: "I10",
+        description: "Essential hypertension",
+        terms: ["hypertension", "high blood pressure", "lisinopril"],
+        confidence: 84
+      },
+      {
+        system: "CPT",
+        code: "99214",
+        description: "Established outpatient E/M, moderate complexity candidate",
+        terms: ["established patient", "adjusted", "ordered", "25 minutes", "worsening"],
+        confidence: 72
+      },
+      {
+        system: "CPT",
+        code: "83036",
+        description: "Hemoglobin A1c test candidate",
+        terms: ["a1c", "hemoglobin a1c"],
+        confidence: 69
+      },
+      {
+        system: "CPT",
+        code: "80053",
+        description: "Comprehensive metabolic panel candidate",
+        terms: ["cmp", "comprehensive metabolic panel"],
+        confidence: 68
+      },
+      {
+        system: "HCPCS",
+        code: "G2211",
+        description: "Visit complexity add-on candidate for Medicare continuity care",
+        terms: ["longitudinal", "primary care", "chronic", "follow up"],
+        confidence: 44
+      }
+    ];
+
+    function normalize(value) {
+      return value.toLowerCase().replace(/\s+/g, " ").trim();
+    }
+
+    function countWords(value) {
+      return normalize(value).split(" ").filter(Boolean).length;
+    }
+
+    function matchedTerms(text, terms) {
+      return terms.filter(term => text.includes(term));
+    }
+
+    function confidencePill(score) {
+      const level = score >= 80 ? "high" : score >= 60 ? "medium" : "low";
+      const label = score >= 80 ? "High" : score >= 60 ? "Medium" : "Needs review";
+      return `<span class="pill ${level}">${label} ${score}%</span>`;
+    }
+
+    function analyze() {
+      const text = normalize(note.value);
+      const words = countWords(note.value);
+      wordCount.textContent = `${words} words`;
+
+      const suggestions = rules.map(rule => ({
+        ...rule,
+        evidence: matchedTerms(text, rule.terms)
+      })).filter(rule => rule.evidence.length);
+
+      const documentation = [
+        { label: "Assessment present", found: /assessment|impression|diagnosis|diagnoses/.test(text) },
+        { label: "Plan present", found: /plan|ordered|follow up|counseled|refill|adjusted/.test(text) },
+        { label: "Medication action", found: /started|stopped|adjusted|refill|prescribed|dose/.test(text) },
+        { label: "Time or MDM cue", found: /\b\d+\s*minutes?\b|complexity|reviewed|ordered|worsening/.test(text) },
+        { label: "Negative findings", found: /denies|no chest pain|no shortness|without/.test(text) },
+        { label: "Follow-up", found: /follow up|return|recheck/.test(text) }
+      ];
+
+      const score = Math.round((documentation.filter(item => item.found).length / documentation.length) * 100);
+      const warnings = [];
+
+      if (!text) warnings.push({ tone: "risk", title: "No documentation", body: "Paste a source note before assigning codes." });
+      if (!documentation[0].found) warnings.push({ tone: "warning", title: "Assessment unclear", body: "Diagnosis codes need explicit provider assessment or a clearly documented condition." });
+      if (!documentation[1].found) warnings.push({ tone: "warning", title: "Plan unclear", body: "Procedure, lab, medication, and E/M support is stronger when the plan is documented." });
+      if (suggestions.some(item => item.code === "99214") && !/established patient/.test(text)) warnings.push({ tone: "risk", title: "E/M patient status missing", body: "Confirm new versus established status before selecting an office E/M level." });
+      if (suggestions.some(item => item.system === "CPT") && document.querySelector("#payer").value === "Medicare") warnings.push({ tone: "warning", title: "Medicare policy review", body: "Check LCD/NCD coverage, NCCI edits, and modifier requirements before release." });
+      if (suggestions.length && !/signed|electronically signed|authenticated/.test(text)) warnings.push({ tone: "warning", title: "Signature not detected", body: "Confirm the source note is authenticated before final billing." });
+      if (score >= 80 && suggestions.length) warnings.push({ tone: "good", title: "Documentation support is usable", body: "The note contains several signals a coder can review against official guidelines." });
+
+      renderSuggestions(suggestions);
+      renderEvidence(documentation, suggestions);
+      renderAudit(warnings);
+
+      codeTotal.textContent = suggestions.length;
+      riskTotal.textContent = warnings.filter(item => item.tone !== "good").length;
+      docScore.textContent = `${score}%`;
+      confidence.textContent = suggestions.length ? (score >= 80 ? "Strong" : score >= 55 ? "Mixed" : "Low") : "--";
+      queueText.textContent = suggestions.length
+        ? `${suggestions.length} draft code${suggestions.length === 1 ? "" : "s"} awaiting coder validation and final guideline review.`
+        : "No draft codes generated for this case.";
+    }
+
+    function renderSuggestions(suggestions) {
+      if (!suggestions.length) {
+        codeRows.innerHTML = `<tr><td colspan="5" class="ghost">No draft code candidates found. Add more complete documentation or connect the AI coding engine.</td></tr>`;
+        return;
+      }
+      codeRows.innerHTML = suggestions.map(item => `
+        <tr>
+          <td>${item.system}</td>
+          <td class="code">${item.code}</td>
+          <td>${item.description}</td>
+          <td>${item.evidence.join(", ")}</td>
+          <td>${confidencePill(item.confidence)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderEvidence(documentation, suggestions) {
+      const signalCards = documentation.map(item => `
+        <div class="card">
+          <h3>${item.label}</h3>
+          <p>${item.found ? "Found in source documentation." : "Not clearly detected in the pasted note."}</p>
+        </div>
+      `).join("");
+
+      const systemCounts = suggestions.reduce((acc, item) => {
+        acc[item.system] = (acc[item.system] || 0) + 1;
+        return acc;
+      }, {});
+
+      const summary = `
+        <div class="card">
+          <h3>Code Mix</h3>
+          <p>${Object.entries(systemCounts).map(([key, value]) => `${key}: ${value}`).join(" | ") || "No code mix yet."}</p>
+        </div>
+      `;
+
+      evidenceCards.innerHTML = summary + signalCards;
+    }
+
+    function renderAudit(warnings) {
+      if (!warnings.length) {
+        auditList.innerHTML = `<div class="finding"><strong>No audit checks yet</strong><p class="small">Analyze a note to generate review items.</p></div>`;
+        return;
+      }
+      auditList.innerHTML = warnings.map(item => `
+        <div class="finding ${item.tone}">
+          <strong>${item.title}</strong>
+          <p class="small">${item.body}</p>
+        </div>
+      `).join("");
+    }
+
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(item => item.classList.remove("active"));
+        document.querySelectorAll(".view").forEach(item => item.classList.remove("active"));
+        tab.classList.add("active");
+        document.querySelector(`#${tab.dataset.tab}`).classList.add("active");
+      });
+    });
+
+    note.addEventListener("input", () => {
+      wordCount.textContent = `${countWords(note.value)} words`;
+    });
+
+    sampleBtn.addEventListener("click", () => {
+      note.value = sample;
+      analyze();
+    });
+
+    clearBtn.addEventListener("click", () => {
+      note.value = "";
+      analyze();
+      note.focus();
+    });
+
+    analyzeBtn.addEventListener("click", analyze);
+  </script>
+</body>
+</html>
