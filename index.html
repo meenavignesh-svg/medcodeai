@@ -250,6 +250,26 @@
       white-space: nowrap;
     }
 
+    .catalog-actions {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) 180px auto;
+      gap: 10px;
+      margin-bottom: 12px;
+      align-items: end;
+    }
+
+    .file-btn {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .file-btn input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
     .tab.active {
       color: var(--blue);
       border-bottom-color: var(--blue);
@@ -382,6 +402,7 @@
       main { grid-template-columns: 1fr; }
       .left { min-height: auto; }
       .metric-strip { grid-template-columns: repeat(2, 1fr); }
+      .catalog-actions { grid-template-columns: 1fr; }
       .cards { grid-template-columns: 1fr; }
       textarea { min-height: 300px; }
     }
@@ -469,6 +490,7 @@
 
         <nav class="tabs" aria-label="Output views">
           <button class="tab active" data-tab="codes" type="button">Code Suggestions</button>
+          <button class="tab" data-tab="catalog" type="button">Code Catalog</button>
           <button class="tab" data-tab="evidence" type="button">Evidence</button>
           <button class="tab" data-tab="audit" type="button">Audit Checks</button>
           <button class="tab" data-tab="workflow" type="button">Workflow</button>
@@ -493,6 +515,41 @@
           </div>
         </div>
 
+        <div class="view" id="catalog">
+          <div class="catalog-actions">
+            <label>Search Codes
+              <input id="catalogSearch" placeholder="Code, description, or keyword">
+            </label>
+            <label>Code System
+              <select id="catalogSystem">
+                <option value="all">All systems</option>
+                <option value="ICD-10-CM">ICD-10-CM</option>
+                <option value="CPT">CPT</option>
+                <option value="HCPCS">HCPCS</option>
+                <option value="ICD-10-PCS">ICD-10-PCS</option>
+              </select>
+            </label>
+            <label class="btn file-btn">Import JSON / CSV
+              <input id="catalogImport" type="file" accept=".json,.csv,text/csv,application/json">
+            </label>
+          </div>
+          <p class="footer-note" id="catalogStatus">Seed catalog loaded. Import licensed/current code files to expand it.</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>System</th>
+                  <th>Code</th>
+                  <th>Description</th>
+                  <th>Keywords</th>
+                  <th>Source</th>
+                </tr>
+              </thead>
+              <tbody id="catalogRows"></tbody>
+            </table>
+          </div>
+        </div>
+
         <div class="view" id="evidence">
           <div class="cards" id="evidenceCards">
             <div class="card"><h3>Documentation Signals</h3><p>Signals will appear after analysis.</p></div>
@@ -513,7 +570,7 @@
             </div>
             <div class="card">
               <h3>Next AI Integration</h3>
-              <p>Connect this interface to a protected backend that sends de-identified notes to a model, retrieves structured JSON, and logs coder acceptance decisions.</p>
+              <p>Connect this interface to a protected backend that sends de-identified notes to a model, retrieves structured JSON, searches the full code catalog, and logs coder acceptance decisions.</p>
             </div>
             <div class="card">
               <h3>Compliance Controls</h3>
@@ -543,53 +600,111 @@
     const riskTotal = document.querySelector("#riskTotal");
     const docScore = document.querySelector("#docScore");
     const confidence = document.querySelector("#confidence");
+    const catalogSearch = document.querySelector("#catalogSearch");
+    const catalogSystem = document.querySelector("#catalogSystem");
+    const catalogImport = document.querySelector("#catalogImport");
+    const catalogRows = document.querySelector("#catalogRows");
+    const catalogStatus = document.querySelector("#catalogStatus");
 
     const sample = `Established patient seen for 25 minutes for worsening type 2 diabetes and hypertension. A1c reviewed at 8.4. Patient reports fatigue and home glucose readings above goal. Provider adjusted metformin dose, added lisinopril refill, ordered CMP and A1c, and counseled on diet and medication adherence. Assessment includes type 2 diabetes mellitus without complications and essential hypertension. No chest pain, shortness of breath, or hypoglycemia. Follow up in 3 months.`;
 
-    const rules = [
+    const seedCatalog = [
       {
         system: "ICD-10-CM",
         code: "E11.9",
         description: "Type 2 diabetes mellitus without complications",
         terms: ["type 2 diabetes", "diabetes mellitus", "a1c", "metformin"],
-        confidence: 88
+        confidence: 88,
+        source: "CMS public ICD-10-CM seed"
       },
       {
         system: "ICD-10-CM",
         code: "I10",
         description: "Essential hypertension",
         terms: ["hypertension", "high blood pressure", "lisinopril"],
-        confidence: 84
+        confidence: 84,
+        source: "CMS public ICD-10-CM seed"
       },
       {
         system: "CPT",
         code: "99214",
         description: "Established outpatient E/M, moderate complexity candidate",
         terms: ["established patient", "adjusted", "ordered", "25 minutes", "worsening"],
-        confidence: 72
+        confidence: 72,
+        source: "Demo placeholder - license CPT before production"
       },
       {
         system: "CPT",
         code: "83036",
         description: "Hemoglobin A1c test candidate",
         terms: ["a1c", "hemoglobin a1c"],
-        confidence: 69
+        confidence: 69,
+        source: "Demo placeholder - license CPT before production"
       },
       {
         system: "CPT",
         code: "80053",
         description: "Comprehensive metabolic panel candidate",
         terms: ["cmp", "comprehensive metabolic panel"],
-        confidence: 68
+        confidence: 68,
+        source: "Demo placeholder - license CPT before production"
       },
       {
         system: "HCPCS",
         code: "G2211",
         description: "Visit complexity add-on candidate for Medicare continuity care",
         terms: ["longitudinal", "primary care", "chronic", "follow up"],
-        confidence: 44
+        confidence: 44,
+        source: "CMS public HCPCS seed"
+      },
+      {
+        system: "ICD-10-CM",
+        code: "J45.909",
+        description: "Unspecified asthma, uncomplicated",
+        terms: ["asthma", "wheezing", "albuterol", "bronchospasm"],
+        confidence: 76,
+        source: "CMS public ICD-10-CM seed"
+      },
+      {
+        system: "ICD-10-CM",
+        code: "M25.561",
+        description: "Pain in right knee",
+        terms: ["right knee pain", "knee pain", "right knee"],
+        confidence: 73,
+        source: "CMS public ICD-10-CM seed"
+      },
+      {
+        system: "HCPCS",
+        code: "A4253",
+        description: "Blood glucose test or reagent strips for home blood glucose monitor, per 50 strips",
+        terms: ["glucose strips", "test strips", "blood glucose monitor"],
+        confidence: 62,
+        source: "CMS public HCPCS seed"
+      },
+      {
+        system: "ICD-10-PCS",
+        code: "0JH60DZ",
+        description: "Insertion of pacemaker device into chest subcutaneous tissue and fascia, open approach",
+        terms: ["pacemaker insertion", "open approach", "subcutaneous tissue"],
+        confidence: 58,
+        source: "CMS public ICD-10-PCS seed"
       }
     ];
+
+    let codeCatalog = loadCatalog();
+
+    function loadCatalog() {
+      try {
+        const saved = localStorage.getItem("medcodeaiCatalog");
+        return saved ? JSON.parse(saved) : seedCatalog;
+      } catch {
+        return seedCatalog;
+      }
+    }
+
+    function saveCatalog() {
+      localStorage.setItem("medcodeaiCatalog", JSON.stringify(codeCatalog));
+    }
 
     function normalize(value) {
       return value.toLowerCase().replace(/\s+/g, " ").trim();
@@ -614,7 +729,7 @@
       const words = countWords(note.value);
       wordCount.textContent = `${words} words`;
 
-      const suggestions = rules.map(rule => ({
+      const suggestions = codeCatalog.map(rule => ({
         ...rule,
         evidence: matchedTerms(text, rule.terms)
       })).filter(rule => rule.evidence.length);
@@ -642,6 +757,7 @@
       renderSuggestions(suggestions);
       renderEvidence(documentation, suggestions);
       renderAudit(warnings);
+      renderCatalog();
 
       codeTotal.textContent = suggestions.length;
       riskTotal.textContent = warnings.filter(item => item.tone !== "good").length;
@@ -666,6 +782,82 @@
           <td>${confidencePill(item.confidence)}</td>
         </tr>
       `).join("");
+    }
+
+    function renderCatalog() {
+      const query = normalize(catalogSearch.value);
+      const system = catalogSystem.value;
+      const filtered = codeCatalog.filter(item => {
+        const haystack = normalize(`${item.system} ${item.code} ${item.description} ${(item.terms || []).join(" ")}`);
+        const systemMatch = system === "all" || item.system === system;
+        return systemMatch && (!query || haystack.includes(query));
+      }).slice(0, 200);
+
+      catalogStatus.textContent = `${codeCatalog.length} code records loaded. Showing ${filtered.length} result${filtered.length === 1 ? "" : "s"}.`;
+
+      if (!filtered.length) {
+        catalogRows.innerHTML = `<tr><td colspan="5" class="ghost">No catalog matches.</td></tr>`;
+        return;
+      }
+
+      catalogRows.innerHTML = filtered.map(item => `
+        <tr>
+          <td>${item.system}</td>
+          <td class="code">${item.code}</td>
+          <td>${item.description}</td>
+          <td>${(item.terms || []).join(", ")}</td>
+          <td>${item.source || "Imported"}</td>
+        </tr>
+      `).join("");
+    }
+
+    function parseCsv(text) {
+      const lines = text.split(/\r?\n/).filter(Boolean);
+      if (!lines.length) return [];
+      const headers = lines.shift().split(",").map(item => normalize(item));
+      return lines.map(line => {
+        const columns = line.split(",");
+        const row = Object.fromEntries(headers.map((header, index) => [header, columns[index] || ""]));
+        return {
+          system: row.system || row.codesystem || row.code_system || "Imported",
+          code: row.code,
+          description: row.description || row.desc || row.long_description || row.short_description,
+          terms: (row.terms || row.keywords || row.description || "").split(/[|;]/).map(item => item.trim()).filter(Boolean),
+          confidence: Number(row.confidence) || 60,
+          source: row.source || "Imported CSV"
+        };
+      }).filter(item => item.code && item.description);
+    }
+
+    function normalizeImportedRecord(item) {
+      return {
+        system: item.system || item.codeSystem || item.code_system || "Imported",
+        code: item.code || item.Code,
+        description: item.description || item.desc || item.longDescription || item.short_description,
+        terms: Array.isArray(item.terms) ? item.terms : String(item.terms || item.keywords || item.description || "").split(/[|;]/).map(term => term.trim()).filter(Boolean),
+        confidence: Number(item.confidence) || 60,
+        source: item.source || "Imported JSON"
+      };
+    }
+
+    function importCatalogFile(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const text = String(reader.result || "");
+          const imported = file.name.toLowerCase().endsWith(".json")
+            ? JSON.parse(text).map(normalizeImportedRecord)
+            : parseCsv(text);
+          const valid = imported.filter(item => item.code && item.description);
+          codeCatalog = [...codeCatalog, ...valid];
+          saveCatalog();
+          renderCatalog();
+          catalogStatus.textContent = `Imported ${valid.length} code records from ${file.name}.`;
+        } catch (error) {
+          catalogStatus.textContent = `Import failed: ${error.message}`;
+        }
+      };
+      reader.readAsText(file);
     }
 
     function renderEvidence(documentation, suggestions) {
@@ -717,6 +909,14 @@
       wordCount.textContent = `${countWords(note.value)} words`;
     });
 
+    catalogSearch.addEventListener("input", renderCatalog);
+    catalogSystem.addEventListener("change", renderCatalog);
+    catalogImport.addEventListener("change", event => {
+      const file = event.target.files && event.target.files[0];
+      if (file) importCatalogFile(file);
+      event.target.value = "";
+    });
+
     sampleBtn.addEventListener("click", () => {
       note.value = sample;
       analyze();
@@ -729,6 +929,7 @@
     });
 
     analyzeBtn.addEventListener("click", analyze);
+    renderCatalog();
   </script>
 </body>
 </html>
